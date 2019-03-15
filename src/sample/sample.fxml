@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.SodukuController">
+    <Button layoutX="90.0" layoutY="347.0" mnemonicParsing="false" onMouseClicked="#showSoduku" text="showSoduku" />
+    <Button layoutX="90.0" layoutY="393.0" mnemonicParsing="false" onMouseClicked="#extractSoduku" text="extractSoduku" />
+    <Button layoutX="90.0" layoutY="438.0" mnemonicParsing="false" onMouseClicked="#checkTheSoduku" text="checkTheSoduku" />
+    <Button layoutX="90.0" layoutY="490.0" mnemonicParsing="false" onMouseClicked="#generateSoduku" text="generateSoduku" />
+   <TextField fx:id="hard" layoutX="14.0" layoutY="490.0" prefHeight="30.0" prefWidth="74.0" text="108" />
+   <TextField fx:id="input_row" layoutX="14.0" layoutY="36.0" />
+   <TextField fx:id="input_col" layoutX="14.0" layoutY="69.0" />
+   <TextField fx:id="input_num" layoutX="14.0" layoutY="102.0" />
+   <Button layoutX="61.0" layoutY="141.0" mnemonicParsing="false" onMouseClicked="#checkCanPlace" text="Button" />
+</AnchorPane>
