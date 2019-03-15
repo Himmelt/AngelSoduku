@@ -34,6 +34,8 @@ public class SodukuController implements Initializable {
     private static final double cellWidth = 40;
     private static boolean initialized = false;
 
+    public static final Stack<Step> stacks = new Stack<>();
+
     public AnchorPane root;
     public TextField input_row;
     public TextField input_col;
@@ -110,6 +112,10 @@ public class SodukuController implements Initializable {
         int current = 0;
         Random random = new Random();
         // TODO 取随机位置，可以先生成一个1-144的随机序列，然后按序列依次取位置。
+
+        List<Integer> queue = getRandQueue();
+
+
         while (current < start) {
             int row = random.nextInt(12);
             int col = random.nextInt(12);
@@ -130,6 +136,46 @@ public class SodukuController implements Initializable {
             if (num != 0) {
                 current++;
                 cells[row][col] = num;
+            }
+        }
+    }
+
+    public static void updatePossibles(Step step) {
+        int row = step.row;
+        int col = step.col;
+        int num = step.num;
+        int r1 = row / 3, c1 = col / 3;
+        if (layout[r1] == c1) return;
+        for (int i = 0; i < 12; i++) {
+            if (i != row) possibles[i][col].remove((Integer) num);
+            if (i != col) possibles[row][i].remove((Integer) num);
+        }
+        for (int i = 0; i < 3; i++) {
+            int r2 = r1 * 3 + i;
+            for (int j = 0; j < 3; j++) {
+                int c2 = c1 * 3 + j;
+                if (r2 == row && c2 == col) continue;
+                possibles[r2][c2].remove((Integer) num);
+            }
+        }
+    }
+
+    public static void revertPossibles(Step step) {
+        int row = step.row;
+        int col = step.col;
+        int num = step.num;
+        int r1 = row / 3, c1 = col / 3;
+        if (layout[r1] == c1) return;
+        for (int i = 0; i < 12; i++) {
+            if (i != row) possibles[i][col].add(num);
+            if (i != col) possibles[row][i].add(num);
+        }
+        for (int i = 0; i < 3; i++) {
+            int r2 = r1 * 3 + i;
+            for (int j = 0; j < 3; j++) {
+                int c2 = c1 * 3 + j;
+                if (r2 == row && c2 == col) continue;
+                possibles[r2][c2].add(num);
             }
         }
     }
@@ -245,5 +291,17 @@ public class SodukuController implements Initializable {
                 }
             }
         }
+    }
+
+    public static List<Integer> getRandQueue() {
+        List<Integer> set = new ArrayList<>();
+        List<Integer> list = new ArrayList<>();
+        Random random = new Random();
+        for (int i = 0; i < 144; i++) list.add(i);
+        while (set.size() < 144) {
+            int index = random.nextInt(list.size());
+            set.add(list.remove(index));
+        }
+        return set;
     }
 }
