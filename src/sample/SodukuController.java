@@ -110,34 +110,43 @@ public class SodukuController implements Initializable {
         }
         generateRandLayout();
         int current = 0;
-        Random random = new Random();
-        // TODO 取随机位置，可以先生成一个1-144的随机序列，然后按序列依次取位置。
-
         List<Integer> queue = getRandQueue();
 
-
         while (current < start) {
-            int row = random.nextInt(12);
-            int col = random.nextInt(12);
-            if (layout[row / 3] == col / 3) continue;
-            if (cells[row][col] != 0) continue;
-            List<Integer> impossibles = new ArrayList<>();
-            int num = 0;
-            for (int i = 0; i < 9; i++) {
-                num = random.nextInt(9) + 1;
-                if (impossibles.contains(num)) {
-                    num = 0;
-                    continue;
-                }
-                if (canPlace(row, col, num)) break;
-                impossibles.add(num);
-                num = 0;
+            int row = queue.get(current) / 12;
+            int col = queue.get(current) - 12 * row;
+            if (layout[row / 3] == col / 3) {
+                // 如果是空白区
+                queue.remove(current);
+                continue;
             }
-            if (num != 0) {
-                current++;
-                cells[row][col] = num;
+            boolean success = false;
+            for (int num : possibles[row][col]) {
+                if (canPlace(row, col, num)) {
+                    forward(new Step(row, col, num));
+                    current++;
+                    success = true;
+                    break;
+                }
+            }
+            if (!success) {
+                System.out.println("Row:" + row + ",Col:" + col + " No Possibles !");
+                backward(stacks.pop());
+                // TODO 排除死局
+                current--;
             }
         }
+    }
+
+    public static void forward(Step step) {
+        cells[step.row][step.col] = step.num;
+        stacks.push(step);
+        updatePossibles(step);
+    }
+
+    public static void backward(Step step) {
+        cells[step.row][step.col] = 0;
+        revertPossibles(step);
     }
 
     public static void updatePossibles(Step step) {
