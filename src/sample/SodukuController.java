@@ -1,16 +1,15 @@
 package sample;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
@@ -18,11 +17,9 @@ import javafx.scene.text.Font;
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SodukuController implements Initializable {
-
-    @FXML
-    public TextField hard;
 
     private static int[] layout = new int[4];
     private static int[][] cells = new int[12][12];
@@ -32,40 +29,101 @@ public class SodukuController implements Initializable {
     private static final double layoutX = 300;
     private static final double layoutY = 80;
     private static final double cellWidth = 40;
-    private static boolean initialized = false;
-
-    public static final Stack<Step> stacks = new Stack<>();
+    private static final List<Integer> ZERO2NINE = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    private static final AtomicBoolean pause = new AtomicBoolean(true);
+    private static SodukuController INSTANCE;
+    private static final Stack<Step> stacks = new Stack<>();
 
     public AnchorPane root;
-    public TextField input_row;
-    public TextField input_col;
-    public TextField input_num;
+    public TextField hard;
+    public Button pause_button;
+    public Label step_label;
+
+    private static int current = 0;
 
     static {
         layout[0] = 0;
-        layout[1] = 0;
-        layout[2] = 0;
-        layout[3] = 0;
+        layout[1] = 1;
+        layout[2] = 2;
+        layout[3] = 3;
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
                 cells[i][j] = 0;
-                possibles[i][j] = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
+                possibles[i][j] = new ArrayList<>(ZERO2NINE);
             }
         }
     }
 
-    public static void init() {
-
+    public SodukuController() {
+        INSTANCE = this;
     }
 
-    public void showSoduku() {
+    public void initialize(URL location, ResourceBundle resources) {
+        ObservableList<Node> pane = root.getChildren();
+        //root.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
+        for (int i = 0; i < 13; i++) {
+            Line line1 = new Line(layoutX, layoutY + cellWidth * i, layoutX + cellWidth * 12, layoutY + cellWidth * i);
+            Line line2 = new Line(layoutX + cellWidth * i, layoutY, layoutX + cellWidth * i, layoutY + cellWidth * 12);
+            if (i == 0 || i == 12) {
+                line1.setStrokeWidth(3);
+                line2.setStrokeWidth(3);
+            } else if (i == 3 || i == 6 || i == 9) {
+                line1.setStrokeWidth(1.5);
+                line2.setStrokeWidth(1.5);
+            } else {
+                line1.setStrokeWidth(0.5);
+                line2.setStrokeWidth(0.5);
+            }
+            pane.add(line1);
+            pane.add(line2);
+        }
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                Rectangle rectangle = new Rectangle(cellWidth * 3 - 2, cellWidth * 3 - 2);
+                rectangle.setFill(Color.TRANSPARENT);
+                rectangle.setLayoutX(layoutX + cellWidth * 3 * j + 1);
+                rectangle.setLayoutY(layoutY + cellWidth * 3 * i + 1);
+                masks[i][j] = rectangle;
+                pane.add(rectangle);
+            }
+        }
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
-                if (cells[i][j] == 0) boxes[i][j].setText("");
-                else boxes[i][j].setText(String.valueOf(cells[i][j]));
-                if (i < 4 && j < 4) masks[i][j].setFill(layout[i] == j ? Color.LIGHTGRAY : Color.TRANSPARENT);
+                TextField text = new TextField();
+                text.setPrefWidth(cellWidth);
+                text.setPrefHeight(cellWidth);
+                text.setAlignment(Pos.CENTER);
+                text.setBackground(Background.EMPTY);
+                text.setLayoutX(layoutX + cellWidth * j);
+                text.setLayoutY(layoutY + cellWidth * i);
+                text.setFont(Font.font(18));
+                boxes[i][j] = text;
+                pane.add(text);
             }
         }
+    }
+
+    public static void updateLayoutUI() {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                masks[i][j].setFill(layout[i] == j ? Color.LIGHTGRAY : Color.TRANSPARENT);
+            }
+        }
+    }
+
+    public static void updateStepUI(Step step) {
+        if (step.num == 0) boxes[step.row][step.col].setText("");
+        else boxes[step.row][step.col].setText(String.valueOf(step.num));
+        INSTANCE.step_label.setText(step.toString());
+    }
+
+    public static void updateCellUI(int row, int col, int num) {
+        if (num == 0) boxes[row][col].setText("");
+        else boxes[row][col].setText(String.valueOf(num));
+    }
+
+    public static void updateStepLabel(Step step) {
+        INSTANCE.step_label.setText(step.toString());
     }
 
     public void extractSoduku() {
@@ -86,33 +144,43 @@ public class SodukuController implements Initializable {
 
     public void generateSoduku() {
         String text = hard.getText();
-        if (text.matches("\\d+")) {
-            generateRandSoduku(Integer.parseInt(text));
-        } else generateRandSoduku(17);
-        showSoduku();
+        new Thread(() -> {
+            if (text.matches("\\d+")) {
+                generateRandSoduku(Integer.parseInt(text));
+            } else generateRandSoduku(17);
+        }).start();
+        System.out.println("Running....");
     }
 
-    public void checkCanPlace() {
-        System.out.println(canPlace(Integer.parseInt(input_row.getText()), Integer.parseInt(input_col.getText()), Integer.parseInt(input_num.getText())));
+    public static void calculateNextStep() {
+
     }
 
     public static void generateRandSoduku(int start) {
         start = start < 17 ? 17 : start > 108 ? 108 : start;
-        layout[0] = 0;
-        layout[1] = 0;
-        layout[2] = 0;
-        layout[3] = 0;
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
                 cells[i][j] = 0;
-                possibles[i][j] = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9));
+                possibles[i][j] = new ArrayList<>(ZERO2NINE);
+                final int row = i, col = j;
+                Platform.runLater(() -> updateCellUI(row, col, 0));
             }
         }
+        stacks.clear();
         generateRandLayout();
-        int current = 0;
+        Platform.runLater(SodukuController::updateLayoutUI);
+        current = 0;
         List<Integer> queue = getRandQueue();
 
         while (current < start) {
+            if (pause.get()) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                continue;
+            }
             int row = queue.get(current) / 12;
             int col = queue.get(current) - 12 * row;
             if (layout[row / 3] == col / 3) {
@@ -123,22 +191,31 @@ public class SodukuController implements Initializable {
             boolean success = false;
             for (int num : possibles[row][col]) {
                 if (canPlace(row, col, num)) {
-                    forward(new Step(row, col, num));
+                    Step step = new Step(row, col, num);
+                    forward(step);
+                    Platform.runLater(() -> updateStepUI(step));
                     current++;
                     success = true;
                     break;
                 }
             }
             if (!success) {
-                System.out.println("Row:" + row + ",Col:" + col + " No Possibles !");
-                backward(stacks.pop());
+                Step step = stacks.pop();
+                backward(step);
+                Platform.runLater(() -> updateStepUI(step));
                 // TODO 排除死局
                 current--;
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     public static void forward(Step step) {
+        // TODO 前进步用蓝色表示，后退步用橙红色表示
         cells[step.row][step.col] = step.num;
         stacks.push(step);
         updatePossibles(step);
@@ -156,7 +233,8 @@ public class SodukuController implements Initializable {
         int r1 = row / 3, c1 = col / 3;
         if (layout[r1] == c1) return;
         for (int i = 0; i < 12; i++) {
-            if (i != row) possibles[i][col].remove((Integer) num);
+            /*if (i != row)*/
+            possibles[i][col].remove((Integer) num);
             if (i != col) possibles[row][i].remove((Integer) num);
         }
         for (int i = 0; i < 3; i++) {
@@ -255,53 +333,6 @@ public class SodukuController implements Initializable {
         return word == 1022 || word == 1;
     }
 
-    public void initialize(URL location, ResourceBundle resources) {
-        if (!initialized) {
-            ObservableList<Node> pane = root.getChildren();
-            root.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
-            for (int i = 0; i < 13; i++) {
-                Line line1 = new Line(layoutX, layoutY + cellWidth * i, layoutX + cellWidth * 12, layoutY + cellWidth * i);
-                Line line2 = new Line(layoutX + cellWidth * i, layoutY, layoutX + cellWidth * i, layoutY + cellWidth * 12);
-                if (i == 0 || i == 12) {
-                    line1.setStrokeWidth(3);
-                    line2.setStrokeWidth(3);
-                } else if (i == 3 || i == 6 || i == 9) {
-                    line1.setStrokeWidth(1.5);
-                    line2.setStrokeWidth(1.5);
-                } else {
-                    line1.setStrokeWidth(0.5);
-                    line2.setStrokeWidth(0.5);
-                }
-                pane.add(line1);
-                pane.add(line2);
-            }
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    Rectangle rectangle = new Rectangle(cellWidth * 3 - 2, cellWidth * 3 - 2);
-                    rectangle.setFill(Color.TRANSPARENT);
-                    rectangle.setLayoutX(layoutX + cellWidth * 3 * j + 1);
-                    rectangle.setLayoutY(layoutY + cellWidth * 3 * i + 1);
-                    masks[i][j] = rectangle;
-                    pane.add(rectangle);
-                }
-            }
-            for (int i = 0; i < 12; i++) {
-                for (int j = 0; j < 12; j++) {
-                    TextField text = new TextField();
-                    text.setPrefWidth(cellWidth);
-                    text.setPrefHeight(cellWidth);
-                    text.setAlignment(Pos.CENTER);
-                    text.setBackground(Background.EMPTY);
-                    text.setLayoutX(layoutX + cellWidth * j);
-                    text.setLayoutY(layoutY + cellWidth * i);
-                    text.setFont(Font.font(18));
-                    boxes[i][j] = text;
-                    pane.add(text);
-                }
-            }
-        }
-    }
-
     public static List<Integer> getRandQueue() {
         List<Integer> set = new ArrayList<>();
         List<Integer> list = new ArrayList<>();
@@ -312,5 +343,10 @@ public class SodukuController implements Initializable {
             set.add(list.remove(index));
         }
         return set;
+    }
+
+    public void pauseGame() {
+        pause.set(!pause.get());
+        pause_button.setText(pause.get() ? "运行" : "暂停");
     }
 }

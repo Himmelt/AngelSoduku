@@ -10,4 +10,8 @@ public class Step {
         this.col = col;
         this.num = num;
     }
+
+    public String toString() {
+        return "Row:" + row + ",Col:" + col + ",Num:" + num;
+    }
 }
