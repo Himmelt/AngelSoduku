@@ -19,29 +19,30 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SodukuController implements Initializable {
+public class Soduku implements Initializable {
 
-    private static int[] layout = new int[4];
-    private static int[][] cells = new int[12][12];
-    private static List<Integer>[][] possibles = new List[12][12];
-    private static Rectangle[][] masks = new Rectangle[4][4];
-    private static TextField[][] boxes = new TextField[12][12];
-    private static final double layoutX = 300;
-    private static final double layoutY = 80;
-    private static final double cellWidth = 40;
-    private static final List<Integer> ZERO2NINE = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    private static final AtomicBoolean pause = new AtomicBoolean(true);
-    private static SodukuController INSTANCE;
-    private static final Stack<Step> stacks = new Stack<>();
+    private int[] layout = new int[4];
+    private int[][] cells = new int[12][12];
+    private List<Integer>[][] possibles = new List[12][12];
+    private Rectangle mask;
+    private Rectangle[][] masks = new Rectangle[4][4];
+    private TextField[][] boxes = new TextField[12][12];
+    private int[] rowQueue = new int[108];
+    private int[] colQueue = new int[108];
+    private final AtomicBoolean pause = new AtomicBoolean(true);
+    private final Stack<Step> stacks = new Stack<>();
 
     public AnchorPane root;
     public TextField hard;
     public Button pause_button;
     public Label step_label;
 
-    private static int current = 0;
+    private static final double layoutX = 300;
+    private static final double layoutY = 80;
+    private static final double cellWidth = 40;
+    private static final List<Integer> ZERO2NINE = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    static {
+    public Soduku() {
         layout[0] = 0;
         layout[1] = 1;
         layout[2] = 2;
@@ -52,10 +53,6 @@ public class SodukuController implements Initializable {
                 possibles[i][j] = new ArrayList<>(ZERO2NINE);
             }
         }
-    }
-
-    public SodukuController() {
-        INSTANCE = this;
     }
 
     public void initialize(URL location, ResourceBundle resources) {
@@ -101,9 +98,12 @@ public class SodukuController implements Initializable {
                 pane.add(text);
             }
         }
+        mask = new Rectangle(cellWidth, cellWidth);
+        mask.setFill(Color.TRANSPARENT);
+        pane.add(mask);
     }
 
-    public static void updateLayoutUI() {
+    public void updateLayoutUI() {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 masks[i][j].setFill(layout[i] == j ? Color.LIGHTGRAY : Color.TRANSPARENT);
@@ -111,19 +111,22 @@ public class SodukuController implements Initializable {
         }
     }
 
-    public static void updateStepUI(Step step) {
+    public void updateStepUI(Step step) {
         if (step.num == 0) boxes[step.row][step.col].setText("");
         else boxes[step.row][step.col].setText(String.valueOf(step.num));
-        INSTANCE.step_label.setText(step.toString());
+        step_label.setText(step.toString());
+        mask.setFill(Color.rgb(200, 0, 0, 0.5));
+        mask.setLayoutX(layoutX + cellWidth * step.col);
+        mask.setLayoutY(layoutY + cellWidth * step.row);
     }
 
-    public static void updateCellUI(int row, int col, int num) {
+    public void updateCellUI(int row, int col, int num) {
         if (num == 0) boxes[row][col].setText("");
         else boxes[row][col].setText(String.valueOf(num));
     }
 
-    public static void updateStepLabel(Step step) {
-        INSTANCE.step_label.setText(step.toString());
+    public void updateStepLabel(Step step) {
+        step_label.setText(step.toString());
     }
 
     public void extractSoduku() {
@@ -146,18 +149,35 @@ public class SodukuController implements Initializable {
         String text = hard.getText();
         new Thread(() -> {
             if (text.matches("\\d+")) {
-                generateRandSoduku(Integer.parseInt(text));
-            } else generateRandSoduku(17);
+                generateSoduku(Integer.parseInt(text));
+            } else generateSoduku(17);
         }).start();
         System.out.println("Running....");
     }
 
-    public static void calculateNextStep() {
-
+    public void goNextStep() {
+        int current = stacks.size() + 1;
+        int row = rowQueue[current];
+        int col = colQueue[current];
+        boolean success = false;
+        for (int num : possibles[row][col]) {
+            if (canPlace(row, col, num)) {
+                Step step = new Step(row, col, num);
+                forward(step);
+                Platform.runLater(() -> updateStepUI(step));
+                success = true;
+                break;
+            }
+        }
+        if (!success) {
+            Step step = stacks.pop();
+            backward(step);
+            Platform.runLater(() -> updateStepUI(step));
+            // TODO 排除死局
+        }
     }
 
-    public static void generateRandSoduku(int start) {
-        start = start < 17 ? 17 : start > 108 ? 108 : start;
+    public void initNewGame() {
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
                 cells[i][j] = 0;
@@ -168,11 +188,18 @@ public class SodukuController implements Initializable {
         }
         stacks.clear();
         generateRandLayout();
-        Platform.runLater(SodukuController::updateLayoutUI);
-        current = 0;
-        List<Integer> queue = getRandQueue();
+        Platform.runLater(this::updateLayoutUI);
+        genRandQueue();
+    }
 
-        while (current < start) {
+    private void generateSoduku(int level) {
+        initNewGame();
+
+        level = level < 17 ? 17 : level > 108 ? 108 : level;
+
+        int current = stacks.size();
+
+        while (stacks.size() < level) {
             if (pause.get()) {
                 try {
                     Thread.sleep(50);
@@ -181,13 +208,8 @@ public class SodukuController implements Initializable {
                 }
                 continue;
             }
-            int row = queue.get(current) / 12;
-            int col = queue.get(current) - 12 * row;
-            if (layout[row / 3] == col / 3) {
-                // 如果是空白区
-                queue.remove(current);
-                continue;
-            }
+            int row = rowQueue[current];
+            int col = colQueue[current];
             boolean success = false;
             for (int num : possibles[row][col]) {
                 if (canPlace(row, col, num)) {
@@ -214,19 +236,19 @@ public class SodukuController implements Initializable {
         }
     }
 
-    public static void forward(Step step) {
+    public void forward(Step step) {
         // TODO 前进步用蓝色表示，后退步用橙红色表示
         cells[step.row][step.col] = step.num;
         stacks.push(step);
         updatePossibles(step);
     }
 
-    public static void backward(Step step) {
+    public void backward(Step step) {
         cells[step.row][step.col] = 0;
         revertPossibles(step);
     }
 
-    public static void updatePossibles(Step step) {
+    public void updatePossibles(Step step) {
         int row = step.row;
         int col = step.col;
         int num = step.num;
@@ -247,7 +269,7 @@ public class SodukuController implements Initializable {
         }
     }
 
-    public static void revertPossibles(Step step) {
+    public void revertPossibles(Step step) {
         int row = step.row;
         int col = step.col;
         int num = step.num;
@@ -267,9 +289,9 @@ public class SodukuController implements Initializable {
         }
     }
 
-    public static boolean canPlace(int row, int col, int num) {
+    public boolean canPlace(int row, int col, int num) {
         int r1 = row / 3, c1 = col / 3;
-        if (layout[r1] == c1) return num == 0;
+        // TODO KEEP if (layout[r1] == c1) return num == 0;
         for (int i = 0; i < 12; i++) {
             if (i != row && cells[i][col] == num) return false;
             if (i != col && cells[row][i] == num) return false;
@@ -285,7 +307,7 @@ public class SodukuController implements Initializable {
         return true;
     }
 
-    public static void generateRandLayout() {
+    public void generateRandLayout() {
         Random random = new Random();
         List<Integer> list = new ArrayList<>();
         while (list.size() < 4) {
@@ -298,7 +320,7 @@ public class SodukuController implements Initializable {
         layout[3] = list.get(3);
     }
 
-    public static boolean checkSoduku() {
+    public boolean checkSoduku() {
         for (int i = 0; i < 12; i++) {
             if (!checkRow(i)) return false;
             if (!checkColumn(i)) return false;
@@ -311,19 +333,19 @@ public class SodukuController implements Initializable {
         return true;
     }
 
-    public static boolean checkColumn(int column) {
+    public boolean checkColumn(int column) {
         short word = 0;
         for (int i = 0; i < 12; i++) word |= 1 << cells[i][column];
         return word == 1023;
     }
 
-    public static boolean checkRow(int row) {
+    public boolean checkRow(int row) {
         short word = 0;
         for (int i = 0; i < 12; i++) word |= 1 << cells[row][i];
         return word == 1023;
     }
 
-    public static boolean checkSquare(int row, int column) {
+    public boolean checkSquare(int row, int column) {
         short word = 0;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -333,20 +355,34 @@ public class SodukuController implements Initializable {
         return word == 1022 || word == 1;
     }
 
-    public static List<Integer> getRandQueue() {
-        List<Integer> set = new ArrayList<>();
-        List<Integer> list = new ArrayList<>();
-        Random random = new Random();
-        for (int i = 0; i < 144; i++) list.add(i);
-        while (set.size() < 144) {
-            int index = random.nextInt(list.size());
-            set.add(list.remove(index));
-        }
-        return set;
-    }
-
     public void pauseGame() {
         pause.set(!pause.get());
         pause_button.setText(pause.get() ? "运行" : "暂停");
+    }
+
+    private void genRandQueue() {
+        List<Integer> list = getRandQueue(0, 143);
+        int index = 0;
+        for (int num : list) {
+            if (layout[num / 36] != num % 12 / 3) {
+                rowQueue[index] = num / 12;
+                colQueue[index] = num % 12;
+                index++;
+            }
+        }
+    }
+
+    private static List<Integer> getRandQueue(int min, int max) {
+        List<Integer> array = new ArrayList<>();
+        List<Integer> list = new ArrayList<>();
+        Random random = new Random();
+        for (int i = min; i <= max; i++) list.add(i);
+        int length = list.size();
+        while (length > 0) {
+            int index = random.nextInt(length);
+            array.add(list.remove(index));
+            length--;
+        }
+        return array;
     }
 }
