@@ -84,6 +84,9 @@ public class Soduku implements Initializable {
                 pane.add(rectangle);
             }
         }
+        mask = new Rectangle(cellWidth, cellWidth);
+        mask.setFill(Color.TRANSPARENT);
+        pane.add(mask);
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
                 TextField text = new TextField();
@@ -98,9 +101,6 @@ public class Soduku implements Initializable {
                 pane.add(text);
             }
         }
-        mask = new Rectangle(cellWidth, cellWidth);
-        mask.setFill(Color.TRANSPARENT);
-        pane.add(mask);
     }
 
     public void updateLayoutUI() {
@@ -115,14 +115,19 @@ public class Soduku implements Initializable {
         if (step.num == 0) boxes[step.row][step.col].setText("");
         else boxes[step.row][step.col].setText(String.valueOf(step.num));
         step_label.setText(step.toString());
-        mask.setFill(Color.rgb(200, 0, 0, 0.5));
+        mask.setFill(Color.rgb(0, 255, 0));
         mask.setLayoutX(layoutX + cellWidth * step.col);
         mask.setLayoutY(layoutY + cellWidth * step.row);
     }
 
-    public void updateCellUI(int row, int col, int num) {
+    public void updateCellUI(int row, int col, int num, boolean init) {
         if (num == 0) boxes[row][col].setText("");
         else boxes[row][col].setText(String.valueOf(num));
+        if (!init) {
+            mask.setFill(Color.rgb(0, 255, 0));
+            mask.setLayoutX(layoutX + cellWidth * col);
+            mask.setLayoutY(layoutY + cellWidth * row);
+        }
     }
 
     public void updateStepLabel(Step step) {
@@ -156,25 +161,47 @@ public class Soduku implements Initializable {
     }
 
     public void goNextStep() {
-        int current = stacks.size() + 1;
-        int row = rowQueue[current];
-        int col = colQueue[current];
+        int next = stacks.size() + 1;
+        int row = rowQueue[next];
+        int col = colQueue[next];
+        //Step step = new Step(row, col, 0, checkPossibles(row, col));
+        Step currentStep = stacks.peek();
         boolean success = false;
-        for (int num : possibles[row][col]) {
+        Iterator<Integer> it = currentStep.possibles.iterator();
+        while (it.hasNext()) {
+            int num = it.next();
+            // TODO 一定是可以的？因为上一步已经计算可能性了
             if (canPlace(row, col, num)) {
-                Step step = new Step(row, col, num);
-                forward(step);
-                Platform.runLater(() -> updateStepUI(step));
+                Step nextStep = new Step(row, col, num, checkPossibles(row, col));
+                forward(nextStep);
+                Platform.runLater(() -> updateStepUI(nextStep));
                 success = true;
                 break;
-            }
+            } else it.remove();
         }
         if (!success) {
             Step step = stacks.pop();
-            backward(step);
-            Platform.runLater(() -> updateStepUI(step));
             // TODO 排除死局
+            stacks.peek().possibles.remove(step.num);
+            backward(step);
+            Platform.runLater(() -> updateCellUI(step.row, step.col, 0, false));
         }
+    }
+
+    private Set<Integer> checkPossibles(int row, int col) {
+        Set<Integer> set = new HashSet<>(ZERO2NINE);
+        for (int i = 0; i < 12; i++) {
+            set.remove(cells[i][col]);
+            set.remove(cells[row][i]);
+        }
+        int r2 = row / 3 * 3;
+        int c2 = col / 3 * 3;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                set.remove(cells[r2 + i][c2 + j]);
+            }
+        }
+        return set;
     }
 
     public void initNewGame() {
@@ -183,13 +210,16 @@ public class Soduku implements Initializable {
                 cells[i][j] = 0;
                 possibles[i][j] = new ArrayList<>(ZERO2NINE);
                 final int row = i, col = j;
-                Platform.runLater(() -> updateCellUI(row, col, 0));
+                Platform.runLater(() -> updateCellUI(row, col, 0, true));
             }
         }
         stacks.clear();
         generateRandLayout();
         Platform.runLater(this::updateLayoutUI);
         genRandQueue();
+        mask.setFill(Color.TRANSPARENT);
+        mask.setLayoutX(0);
+        mask.setLayoutY(0);
     }
 
     private void generateSoduku(int level) {
@@ -213,7 +243,7 @@ public class Soduku implements Initializable {
             boolean success = false;
             for (int num : possibles[row][col]) {
                 if (canPlace(row, col, num)) {
-                    Step step = new Step(row, col, num);
+                    Step step = new Step(row, col, num, checkPossibles(row, col));
                     forward(step);
                     Platform.runLater(() -> updateStepUI(step));
                     current++;
@@ -240,12 +270,12 @@ public class Soduku implements Initializable {
         // TODO 前进步用蓝色表示，后退步用橙红色表示
         cells[step.row][step.col] = step.num;
         stacks.push(step);
-        updatePossibles(step);
+        //updatePossibles(step);
     }
 
     public void backward(Step step) {
         cells[step.row][step.col] = 0;
-        revertPossibles(step);
+        //revertPossibles(step);
     }
 
     public void updatePossibles(Step step) {
