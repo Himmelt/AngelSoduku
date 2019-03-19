@@ -1,21 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
-<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0"
-            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Soduku">
-    <Button layoutX="90.0" layoutY="393.0" mnemonicParsing="false" onMouseClicked="#extractSoduku" text="extractSoduku"/>
-    <Button layoutX="90.0" layoutY="438.0" mnemonicParsing="false" onMouseClicked="#initNewGame" text="新生成初始化"/>
-    <Button layoutX="90.0" layoutY="490.0" mnemonicParsing="false" onMouseClicked="#generateSoduku" text="启动自动生成"/>
-    <TextField fx:id="hard" layoutX="14.0" layoutY="490.0" prefHeight="30.0" prefWidth="74.0" text="108"/>
-    <Button layoutX="169.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;"/>
-    <Button layoutX="169.0" layoutY="322.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="genFirstFourMatrix"/>
-    <Button layoutX="11.0" layoutY="302.0" mnemonicParsing="false" text="&lt; 上一步"/>
-    <Button fx:id="pause_button" layoutX="105.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停"/>
+
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Soduku">
+    <Button layoutX="90.0" layoutY="474.0" mnemonicParsing="false" onMouseClicked="#extractSoduku" text="extractSoduku" />
+    <Button layoutX="90.0" layoutY="506.0" mnemonicParsing="false" onMouseClicked="#initNewGame" text="新生成初始化" />
+    <Button layoutX="90.0" layoutY="537.0" mnemonicParsing="false" onMouseClicked="#generateSoduku" text="启动自动生成" />
+    <TextField fx:id="hard" layoutX="14.0" layoutY="538.0" prefHeight="30.0" prefWidth="74.0" text="108" />
+    <Button layoutX="169.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;" />
+    <Button layoutX="10.0" layoutY="342.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="FirstFour" />
+    <Button layoutX="10.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#genNextFourMatrix" text="NextFour" />
+    <Button layoutX="10.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#genLastFourMatrix" text="LastFour" />
+
+    <Button layoutX="120.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#reGenNextFour" text="ReNextFour" />
+    <Button layoutX="120.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#reGenLastFour" text="ReLastFour" />
+
+    <Button layoutX="11.0" layoutY="302.0" mnemonicParsing="false" text="&lt; 上一步" />
+    <Button fx:id="pause_button" layoutX="105.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停" />
     <Label fx:id="step_label" layoutX="14.0" layoutY="255.0" prefHeight="30.0" prefWidth="236.0">
         <font>
-            <Font size="17.0"/>
+            <Font size="17.0" />
         </font>
     </Label>
 </AnchorPane>

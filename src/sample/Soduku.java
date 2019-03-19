@@ -360,21 +360,108 @@ public class Soduku implements Initializable {
     }
 
     public void genFirstFourMatrix() {
-        //initNewGame();
-        generateRandLayout();
-        System.out.println(Arrays.toString(layout));
+        initNewGame();
+        //generateRandLayout();
+        //updateLayoutUI();
         for (int row = 0; row < 4; row++) {
             int col = layout[row] + 1;
-            System.out.println("layout:"+col);
-            if (col == 4) col = 0;
+            if (col >= 4) col = col - 4;
             List<Integer> list = genRandMatrix();
             for (int i = 0; i < 3; i++) {
-                int r1 = row*3 + i;
+                int r1 = row * 3 + i;
                 for (int j = 0; j < 3; j++) {
-                    int c1 = col*3 + j;
-                    System.out.println(r1+","+c1);
+                    int c1 = col * 3 + j;
                     cells[r1][c1] = list.get(3 * i + j);
-                    boxes[r1][c1].setText(String.valueOf(cells[r1][c1]));
+                    Platform.runLater(() -> boxes[r1][c1].setText(String.valueOf(cells[r1][c1])));
+                }
+            }
+        }
+    }
+
+    public void reGenNextFour() {
+        for (int row = 0; row < 4; row++) {
+            int col1 = layout[row] + 2;
+            if (col1 >= 4) col1 = col1 - 4;
+            int col2 = layout[row] + 3;
+            if (col2 >= 4) col2 = col2 - 4;
+            for (int i = 0; i < 3; i++) {
+                int r1 = row * 3 + i;
+                for (int j = 0; j < 3; j++) {
+                    int c1 = col1 * 3 + j;
+                    int c2 = col2 * 3 + j;
+                    cells[r1][c1] = 0;
+                    cells[r1][c2] = 0;
+                    Platform.runLater(() -> {
+                        boxes[r1][c1].setText("");
+                        boxes[r1][c2].setText("");
+                    });
+                }
+            }
+        }
+        genNextFourMatrix();
+    }
+
+    public void genNextFourMatrix() {
+        for (int row = 0; row < 4; row++) {
+            int col = layout[row] + 2;
+            if (col >= 4) col = col - 4;
+            for (int i = 0; i < 3; i++) {
+                int r1 = row * 3 + i;
+                COLUMN:
+                for (int j = 0; j < 3; j++) {
+                    int c1 = col * 3 + j;
+                    List<Integer> queue = getRandQueue(1, 9);
+                    for (int num : queue) {
+                        if (canPlace(r1, c1, num)) {
+                            cells[r1][c1] = num;
+                            Platform.runLater(() -> boxes[r1][c1].setText(String.valueOf(cells[r1][c1])));
+                            continue COLUMN;
+                        }
+                    }
+                    Platform.runLater(() -> boxes[r1][c1].setText("N"));
+                    System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
+                    return;
+                }
+            }
+        }
+    }
+
+    public void reGenLastFour() {
+        for (int row = 0; row < 4; row++) {
+            int col = layout[row] + 3;
+            if (col >= 4) col = col - 4;
+            for (int i = 0; i < 3; i++) {
+                int r1 = row * 3 + i;
+                for (int j = 0; j < 3; j++) {
+                    int c1 = col * 3 + j;
+                    cells[r1][c1] = 0;
+                    Platform.runLater(() -> boxes[r1][c1].setText(""));
+                }
+            }
+        }
+        genLastFourMatrix();
+    }
+
+    public void genLastFourMatrix() {
+        for (int row = 0; row < 4; row++) {
+            int col = layout[row] + 3;
+            if (col >= 4) col = col - 4;
+            for (int i = 0; i < 3; i++) {
+                int r1 = row * 3 + i;
+                COLUMN:
+                for (int j = 0; j < 3; j++) {
+                    int c1 = col * 3 + j;
+                    List<Integer> queue = getRandQueue(1, 9);
+                    for (int num : queue) {
+                        if (canPlace(r1, c1, num)) {
+                            cells[r1][c1] = num;
+                            Platform.runLater(() -> boxes[r1][c1].setText(String.valueOf(cells[r1][c1])));
+                            continue COLUMN;
+                        }
+                    }
+                    Platform.runLater(() -> boxes[r1][c1].setText("N"));
+                    System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
+                    return;
                 }
             }
         }
@@ -393,7 +480,7 @@ public class Soduku implements Initializable {
     private static List<Integer> getRandQueue(int min, int max) {
         List<Integer> array = new ArrayList<>();
         List<Integer> list = new ArrayList<>();
-        Random random = new Random();
+        Random random = new Random(System.nanoTime());
         for (int i = min; i <= max; i++) list.add(i);
         int length = list.size();
         while (length > 0) {
