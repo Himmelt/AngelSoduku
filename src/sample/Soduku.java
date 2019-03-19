@@ -181,7 +181,7 @@ public class Soduku implements Initializable {
         }
         if (!success) {
             //updateNextStepUI(rowQueue[next + 1], colQueue[next + 1]);
-            backward();
+            backward(row, col);
         }
     }
 
@@ -241,9 +241,11 @@ public class Soduku implements Initializable {
         cells[row][col] = num;
         Step step = new Step(row, col, num, next < 108 ? checkPossibles(rowQueue[next], colQueue[next]) : new HashSet<>());
         stacks.push(step);
+        System.out.println(next - 1);
+        //System.out.println("-->:" + (next - 1) + "," + step + "," + step.possibles);
         Platform.runLater(() -> {
             forwardStepUI(step);
-            //updateNextStepUI(rowQueue[next], colQueue[next]);
+            updateNextStepUI(rowQueue[next], colQueue[next]);
         });
     }
 
@@ -253,11 +255,25 @@ public class Soduku implements Initializable {
         nextMask.setLayoutY(layoutY + cellWidth * row);
     }
 
-    private void backward() {
+    private void backward(int row, int col) {
         Step fail = stacks.pop();
         cells[fail.row][fail.col] = 0;
         stacks.peek().possibles.remove(fail.num);
-        Platform.runLater(() -> backwardStepUI(fail));
+        while (!interfere(fail.row, fail.col, row, col)) {
+            fail = stacks.pop();
+            cells[fail.row][fail.col] = 0;
+            stacks.peek().possibles.remove(fail.num);
+        }
+        System.out.println(stacks.size() - 1);
+        //System.out.println("<--:" + (stacks.size() - 1) + stacks.peek() + "," + stacks.peek().possibles);
+        //Platform.runLater(() -> backwardStepUI(fail));
+    }
+
+    public static boolean interfere(int row1, int col1, int row2, int col2) {
+        if (row1 == row2 || col1 == col2) return true;
+        int r2 = row2 / 3 * 3;
+        int c2 = col2 / 3 * 3;
+        return row1 >= r2 && row1 - r2 < 3 && col1 >= c2 && col1 - c2 < 3;
     }
 
     public boolean canPlace(int row, int col, int num) {
