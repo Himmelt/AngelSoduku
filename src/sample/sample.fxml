@@ -10,6 +10,7 @@
     <Button layoutX="90.0" layoutY="490.0" mnemonicParsing="false" onMouseClicked="#generateSoduku" text="启动自动生成"/>
     <TextField fx:id="hard" layoutX="14.0" layoutY="490.0" prefHeight="30.0" prefWidth="74.0" text="108"/>
     <Button layoutX="169.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;"/>
+    <Button layoutX="169.0" layoutY="322.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="genFirstFourMatrix"/>
     <Button layoutX="11.0" layoutY="302.0" mnemonicParsing="false" text="&lt; 上一步"/>
     <Button fx:id="pause_button" layoutX="105.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停"/>
     <Label fx:id="step_label" layoutX="14.0" layoutY="255.0" prefHeight="30.0" prefWidth="236.0">

@@ -359,6 +359,37 @@ public class Soduku implements Initializable {
         }
     }
 
+    public void genFirstFourMatrix() {
+        //initNewGame();
+        generateRandLayout();
+        System.out.println(Arrays.toString(layout));
+        for (int row = 0; row < 4; row++) {
+            int col = layout[row] + 1;
+            System.out.println("layout:"+col);
+            if (col == 4) col = 0;
+            List<Integer> list = genRandMatrix();
+            for (int i = 0; i < 3; i++) {
+                int r1 = row*3 + i;
+                for (int j = 0; j < 3; j++) {
+                    int c1 = col*3 + j;
+                    System.out.println(r1+","+c1);
+                    cells[r1][c1] = list.get(3 * i + j);
+                    boxes[r1][c1].setText(String.valueOf(cells[r1][c1]));
+                }
+            }
+        }
+    }
+
+    private ArrayList<Integer> genRandMatrix() {
+        Random random = new Random();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (list.size() < 9) {
+            int rand = random.nextInt(9) + 1;
+            if (!list.contains(rand)) list.add(rand);
+        }
+        return list;
+    }
+
     private static List<Integer> getRandQueue(int min, int max) {
         List<Integer> array = new ArrayList<>();
         List<Integer> list = new ArrayList<>();
