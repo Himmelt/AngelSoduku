@@ -459,11 +459,46 @@ public class Soduku implements Initializable {
         genNextFourMatrix();
     }
 
+    public void genAllFour() {
+        initNewGame();
+        new Thread(() -> {
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 4; col++) {
+                    if (layout[row] != col) {
+                        int code = genTheFour(row, col);
+                        System.out.println("row:" + row + ",col:" + col + ",code:" + code);
+                        if (code == -1) {
+                            col -= 2;
+                            if (layout[row] == col + 1) {
+                                col -= 1;
+                            }
+                            if (col + 1 < 0) {
+                                col = col + 4;
+                                if (layout[row] == col + 1) {
+                                    col -= 1;
+                                }
+                                row = row - 1;
+                            }
+                            continue;
+                        } else if (code == 0) {
+                            col -= 1;
+                        }
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }).start();
+    }
+
     public void genNextFourMatrix() {
         for (int row = 0; row < 4; row++) {
             int col = layout[row] + 2;
             if (col >= 4) col = col - 4;
-            while (!genTheFour(row, col)) ;
+            while (genTheFour(row, col) != 1) ;
         }
     }
 
@@ -552,7 +587,31 @@ public class Soduku implements Initializable {
         return possibles;
     }
 
-    private boolean genTheFour(int row, int col) {
+    private void cleanTheFour(int row, int col) {
+        if (row < 0 || col < 0 || row > 3 || col > 3) {
+            System.out.println("Invalid Axis:row:" + row + ",col:" + col);
+            return;
+        }
+        for (int i = 0; i < 3; i++) {
+            int r1 = row * 3 + i;
+            for (int j = 0; j < 3; j++) {
+                int c1 = col * 3 + j;
+                cells[r1][c1] = 0;
+                Platform.runLater(() -> boxes[r1][c1].setText(""));
+            }
+        }
+    }
+
+    private int genTheFour(int row, int col) {
+        cleanTheFour(row, col);
+        for (int i = 0; i < 3; i++) {
+            int r1 = row * 3 + i;
+            for (int j = 0; j < 3; j++) {
+                int c1 = col * 3 + j;
+                if (checkPossibles(r1, c1).isEmpty()) return -1;
+            }
+        }
+
         for (int i = 0; i < 3; i++) {
             int r1 = row * 3 + i;
             COLUMN:
@@ -567,11 +626,11 @@ public class Soduku implements Initializable {
                     }
                 }
                 //Platform.runLater(() -> boxes[r1][c1].setText("N"));
-                System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
-                return false;
+                //System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
+                return 0;
             }
         }
-        return true;
+        return 1;
     }
 
     public void reGenLastFour() {
