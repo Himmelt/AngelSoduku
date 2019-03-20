@@ -15,6 +15,10 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -378,6 +382,32 @@ public class Soduku implements Initializable {
         }
     }
 
+    public void exportToFile() {
+        File file = new File("map.txt");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            OutputStreamWriter writer = new OutputStreamWriter(out);
+            for (int i = 0; i < 12; i++) {
+                for (int j = 0; j < 12; j++) {
+                    writer.write(Integer.toString(cells[i][j]));
+                    writer.write(' ');
+                }
+                writer.write('\n');
+            }
+            writer.flush();
+            writer.close();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
     public void reGenNextFour() {
         for (int row = 0; row < 4; row++) {
             int col1 = layout[row] + 2;
@@ -405,23 +435,27 @@ public class Soduku implements Initializable {
         for (int row = 0; row < 4; row++) {
             int col = layout[row] + 2;
             if (col >= 4) col = col - 4;
-            for (int i = 0; i < 3; i++) {
-                int r1 = row * 3 + i;
-                COLUMN:
-                for (int j = 0; j < 3; j++) {
-                    int c1 = col * 3 + j;
-                    List<Integer> queue = getRandQueue(1, 9);
-                    for (int num : queue) {
-                        if (canPlace(r1, c1, num)) {
-                            cells[r1][c1] = num;
-                            Platform.runLater(() -> boxes[r1][c1].setText(String.valueOf(cells[r1][c1])));
-                            continue COLUMN;
-                        }
+            genTheFour(row, col);
+        }
+    }
+
+    private void genTheFour(int row, int col) {
+        for (int i = 0; i < 3; i++) {
+            int r1 = row * 3 + i;
+            COLUMN:
+            for (int j = 0; j < 3; j++) {
+                int c1 = col * 3 + j;
+                List<Integer> queue = getRandQueue(1, 9);
+                for (int num : queue) {
+                    if (canPlace(r1, c1, num)) {
+                        cells[r1][c1] = num;
+                        Platform.runLater(() -> boxes[r1][c1].setText(String.valueOf(cells[r1][c1])));
+                        continue COLUMN;
                     }
-                    Platform.runLater(() -> boxes[r1][c1].setText("N"));
-                    System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
-                    return;
                 }
+                Platform.runLater(() -> boxes[r1][c1].setText("N"));
+                System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
+                return;
             }
         }
     }
