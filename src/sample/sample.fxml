@@ -14,7 +14,7 @@
     <Button layoutX="169.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;" />
     <Button layoutX="10.0" layoutY="342.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="FirstFour" />
     <Button layoutX="10.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#genNextFourMatrix" text="NextFour" />
-    <Button layoutX="10.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#genLastFourMatrix" text="LastFour" />
+    <Button layoutX="10.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#calculateLastFour" text="LastFour" />
 
     <Button layoutX="120.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#reGenNextFour" text="ReNextFour" />
     <Button layoutX="120.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#reGenLastFour" text="ReLastFour" />

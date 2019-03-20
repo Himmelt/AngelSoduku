@@ -208,6 +208,33 @@ public class Soduku implements Initializable {
         return set;
     }
 
+    private Set<Integer> checkLastPossibles(int row, int col) {
+        Set<Integer> set = new HashSet<>(ZERO2NINE);
+        int max_row;
+        if (row >= 9) {
+            max_row = 12;
+        } else if (layout[row / 3 + 1] == col / 3) {
+            max_row = (row / 3 + 3) * 3;
+        } else {
+            max_row = (row / 3 + 2) * 3;
+        }
+
+        for (int i = 0; i < 12; i++) {
+            if (i < max_row) set.remove(cells[i][col]);
+            set.remove(cells[row][i]);
+        }
+        int r2 = row / 3 * 3;
+        int c2 = col / 3 * 3;
+        for (int i = 0; i < 3; i++) {
+            if (r2 + i < max_row) {
+                for (int j = 0; j < 3; j++) {
+                    set.remove(cells[r2 + i][c2 + j]);
+                }
+            }
+        }
+        return set;
+    }
+
     public void initNewGame() {
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 12; j++) {
@@ -365,6 +392,7 @@ public class Soduku implements Initializable {
 
     public void genFirstFourMatrix() {
         initNewGame();
+        line = 0;
         //generateRandLayout();
         //updateLayoutUI();
         for (int row = 0; row < 4; row++) {
@@ -435,11 +463,96 @@ public class Soduku implements Initializable {
         for (int row = 0; row < 4; row++) {
             int col = layout[row] + 2;
             if (col >= 4) col = col - 4;
-            genTheFour(row, col);
+            while (!genTheFour(row, col)) ;
         }
     }
 
-    private void genTheFour(int row, int col) {
+    private int line = 0;
+
+    public void calculateLastFour() {
+        if (line > 3) return;
+        /*for (int row = 0; row < 4; row++) {
+        }*/
+        int row = line;
+        int col = layout[line++] + 3;
+        if (col >= 4) col = col - 4;
+        for (int i = 0; i < 3; i++) {
+            int r1 = row * 3 + i;
+            int c1 = col * 3;
+            Set<Integer> ps1 = checkLastPossibles(r1, c1);
+            if (ps1.size() == 1) {
+                int num = ps1.iterator().next();
+                cells[r1][c1] = num;
+                ps1.remove(num);
+            }
+            Set<Integer> ps2 = checkLastPossibles(r1, c1 + 1);
+            if (ps2.size() == 1) {
+                int num = ps2.iterator().next();
+                cells[r1][c1 + 1] = num;
+                ps1.remove(num);
+                ps2.remove(num);
+            }
+            Set<Integer> ps3 = checkLastPossibles(r1, c1 + 2);
+            if (ps3.size() == 1) {
+                int num = ps3.iterator().next();
+                cells[r1][c1 + 2] = num;
+                ps1.remove(num);
+                ps2.remove(num);
+                ps3.remove(num);
+            }
+
+
+            if (ps1.size() >= 1) {
+                Set<Integer> ps = checkPossibles(r1, c1);
+                int num = ps.size() >= 1 ? ps.iterator().next() : ps1.iterator().next();
+                cells[r1][c1] = num;
+                ps1.remove(num);
+                ps2.remove(num);
+                ps3.remove(num);
+            }
+            if (ps2.size() >= 1) {
+                Set<Integer> ps = checkPossibles(r1, c1 + 1);
+                int num = ps.size() >= 1 ? ps.iterator().next() : ps2.iterator().next();
+                cells[r1][c1 + 1] = num;
+                ps1.remove(num);
+                ps2.remove(num);
+                ps3.remove(num);
+            }
+            if (ps3.size() >= 1) {
+                Set<Integer> ps = checkPossibles(r1, c1 + 2);
+                int num = ps.size() >= 1 ? ps.iterator().next() : ps3.iterator().next();
+                cells[r1][c1 + 2] = num;
+                ps1.remove(num);
+                ps2.remove(num);
+                ps3.remove(num);
+            }
+
+//            if (ps1.size() == 1) cells[r1][c1] = ps1.iterator().next();
+//            if (ps2.size() == 1) cells[r1][c1 + 1] = ps2.iterator().next();
+//            if (ps3.size() == 1) cells[r1][c1 + 2] = ps3.iterator().next();
+//
+//            if (cells[r1][c1] == 0 && ps1.size() > 0) cells[r1][c1] = ps1.iterator().next();
+//
+//            if (cells[r1][c1 + 1] == 0 && ps1.size() > 0) cells[r1][c1 + 1] = ps1.iterator().next();
+//            if (cells[r1][c1 + 2] == 0 && ps1.size() > 0) cells[r1][c1 + 2] = ps1.iterator().next();
+
+            Platform.runLater(() -> {
+                if (cells[r1][c1] != 0) boxes[r1][c1].setText(String.valueOf(cells[r1][c1]));
+                if (cells[r1][c1 + 1] != 0) boxes[r1][c1 + 1].setText(String.valueOf(cells[r1][c1 + 1]));
+                if (cells[r1][c1 + 2] != 0) boxes[r1][c1 + 2].setText(String.valueOf(cells[r1][c1 + 2]));
+            });
+        }
+    }
+
+    public Set<Integer> getRowPossibles(int row) {
+        Set<Integer> possibles = new HashSet<>(ZERO2NINE);
+        for (int i = 0; i < 12; i++) {
+            possibles.remove(cells[row][i]);
+        }
+        return possibles;
+    }
+
+    private boolean genTheFour(int row, int col) {
         for (int i = 0; i < 3; i++) {
             int r1 = row * 3 + i;
             COLUMN:
@@ -453,11 +566,12 @@ public class Soduku implements Initializable {
                         continue COLUMN;
                     }
                 }
-                Platform.runLater(() -> boxes[r1][c1].setText("N"));
+                //Platform.runLater(() -> boxes[r1][c1].setText("N"));
                 System.out.println("row:" + r1 + ",col:" + c1 + " NOT Possible !");
-                return;
+                return false;
             }
         }
+        return true;
     }
 
     public void reGenLastFour() {
