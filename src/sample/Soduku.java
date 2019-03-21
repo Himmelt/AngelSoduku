@@ -243,13 +243,13 @@ public class Soduku implements Initializable {
                 Platform.runLater(() -> boxes[row][col].setText(""));
             }
         }
-        stacks.clear();
+        //stacks.clear();
         generateRandLayout();
         Platform.runLater(this::updateLayoutUI);
-        genRandQueue();
-        mask.setFill(Color.TRANSPARENT);
-        mask.setLayoutX(0);
-        mask.setLayoutY(0);
+        //genRandQueue();
+        //mask.setFill(Color.TRANSPARENT);
+        //mask.setLayoutX(0);
+        //mask.setLayoutY(0);
     }
 
     private void generateSoduku(int level) {
@@ -326,12 +326,7 @@ public class Soduku implements Initializable {
     }
 
     public void generateRandLayout() {
-        Random random = new Random();
-        List<Integer> list = new ArrayList<>();
-        while (list.size() < 4) {
-            int num = random.nextInt(4);
-            if (!list.contains(num)) list.add(num);
-        }
+        List<Integer> list = getRandQueue(0, 3);
         layout[0] = list.get(0);
         layout[1] = list.get(1);
         layout[2] = list.get(2);
@@ -498,10 +493,43 @@ public class Soduku implements Initializable {
         getAllSolutions(0, 0);
     }
 
+    public void generateMatrix() {
+        new Thread(() -> {
+            initNewGame();
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 4; col++) {
+                    if (layout[row] != col) {
+                        if (row == 0 && (layout[row] == 0 ? col == 1 : col == 0)) {
+                            geneFirstGrid(row, col);
+                        } else {
+                            ArrayList<ArrayList<Integer>> solutions = getAllSolutions(row, col);
+                        }
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private void geneFirstGrid(int row, int col) {
+        List<Integer> queue = getRandQueue(1, 9);
+        for (int i = 0; i < 3; i++) {
+            int r1 = row * 3 + i;
+            for (int j = 0; j < 3; j++) {
+                int c1 = col * 3 + j;
+                cells[r1][c1] = queue.get(3 * i + j);
+                Platform.runLater(() -> {
+                    if (cells[r1][c1] != 0) boxes[r1][c1].setText(String.valueOf(cells[r1][c1]));
+                });
+            }
+        }
+    }
+
+
     private ArrayList<ArrayList<Integer>> getAllSolutions(int row, int col) {
         int[] solution = new int[9];
         ArrayList<ArrayList<Integer>> solutions = new ArrayList<>();
         doSth(row, col, 0, solution, solutions);
+        solutions.forEach(System.out::println);
         return solutions;
     }
 
