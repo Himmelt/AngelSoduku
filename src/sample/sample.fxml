@@ -11,18 +11,19 @@
     <Button layoutX="90.0" layoutY="506.0" mnemonicParsing="false" onMouseClicked="#initNewGame" text="新生成初始化" />
     <Button layoutX="90.0" layoutY="537.0" mnemonicParsing="false" onMouseClicked="#generateSoduku" text="启动自动生成" />
     <TextField fx:id="hard" layoutX="14.0" layoutY="538.0" prefHeight="30.0" prefWidth="74.0" text="108" />
-    <Button layoutX="169.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;" />
-    <Button layoutX="10.0" layoutY="342.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="FirstFour" />
-    <Button layoutX="10.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#genNextFourMatrix" text="NextFour" />
-    <Button layoutX="10.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#calculateLastFour" text="LastFour" />
+    <Button layoutX="169.0" layoutY="135.0" mnemonicParsing="false" onMouseClicked="#goNextStep" text="下一步 &gt;" />
+    <Button layoutX="10.0" layoutY="236.0" mnemonicParsing="false" onMouseClicked="#genFirstFourMatrix" text="FirstFour" />
+    <Button layoutX="10.0" layoutY="272.0" mnemonicParsing="false" onMouseClicked="#genNextFourMatrix" text="NextFour" />
+    <Button layoutX="10.0" layoutY="308.0" mnemonicParsing="false" onMouseClicked="#calculateLastFour" text="LastFour" />
 
-    <Button layoutX="120.0" layoutY="375.0" mnemonicParsing="false" onMouseClicked="#reGenNextFour" text="ReNextFour" />
-    <Button layoutX="120.0" layoutY="407.0" mnemonicParsing="false" onMouseClicked="#reGenLastFour" text="ReLastFour" />
-    <Button layoutX="120.0" layoutY="437.0" mnemonicParsing="false" onMouseClicked="#exportToFile" text="exportToFile" />
-    <Button layoutX="120.0" layoutY="467.0" mnemonicParsing="false" onMouseClicked="#genAllFour" text="genAllFour" />
+    <Button layoutX="120.0" layoutY="280.0" mnemonicParsing="false" onMouseClicked="#reGenNextFour" text="ReNextFour" />
+    <Button layoutX="120.0" layoutY="311.0" mnemonicParsing="false" onMouseClicked="#reGenLastFour" text="ReLastFour" />
+    <Button layoutX="120.0" layoutY="343.0" mnemonicParsing="false" onMouseClicked="#exportToFile" text="exportToFile" />
+    <Button layoutX="120.0" layoutY="376.0" mnemonicParsing="false" onMouseClicked="#genAllFour" text="genAllFour" />
+    <Button layoutX="120.0" layoutY="396.0" mnemonicParsing="false" onMouseClicked="#genAllSolutions" text="gen11Solutions" />
 
-    <Button layoutX="11.0" layoutY="302.0" mnemonicParsing="false" text="&lt; 上一步" />
-    <Button fx:id="pause_button" layoutX="105.0" layoutY="302.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停" />
+    <Button layoutX="11.0" layoutY="139.0" mnemonicParsing="false" text="&lt; 上一步" />
+    <Button fx:id="pause_button" layoutX="105.0" layoutY="138.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停" />
     <Label fx:id="step_label" layoutX="14.0" layoutY="255.0" prefHeight="30.0" prefWidth="236.0">
         <font>
             <Font size="17.0" />

@@ -494,6 +494,35 @@ public class Soduku implements Initializable {
         }).start();
     }
 
+    public void genAllSolutions() {
+        getAllSolutions(0, 0);
+    }
+
+    private ArrayList<ArrayList<Integer>> getAllSolutions(int row, int col) {
+        int[] solution = new int[9];
+        ArrayList<ArrayList<Integer>> solutions = new ArrayList<>();
+        doSth(row, col, 0, solution, solutions);
+        return solutions;
+    }
+
+    private void doSth(int row, int col, int i, int[] solution, ArrayList<ArrayList<Integer>> solutions) {
+        int r1 = row * 3 + i / 3;
+        int c1 = col * 3 + i % 3;
+        Set<Integer> possibles = checkPossibles(r1, c1);
+        for (int num : possibles) {
+            cells[r1][c1] = num;
+            solution[i] = num;
+            if (i < 8) doSth(row, col, i + 1, solution, solutions);
+            else {
+                ArrayList<Integer> list = new ArrayList<>();
+                for (int n : solution) list.add(n);
+                solutions.add(list);
+            }
+            cells[r1][c1] = 0;
+            solution[i] = 0;
+        }
+    }
+
     public void genNextFourMatrix() {
         for (int row = 0; row < 4; row++) {
             int col = layout[row] + 2;
