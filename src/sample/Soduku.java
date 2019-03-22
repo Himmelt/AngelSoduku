@@ -44,7 +44,7 @@ public class Soduku implements Initializable {
     private static final double layoutX = 300;
     private static final double layoutY = 80;
     private static final double cellWidth = 40;
-    private static final List<Integer> ZERO2NINE = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    private static final List<Integer> ONE2NINE = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
     public Soduku() {
         layout[0] = 0;
@@ -189,8 +189,20 @@ public class Soduku implements Initializable {
         }
     }
 
+    private ArrayList<Integer> checkRandPossibles(int row, int col) {
+        ArrayList<Integer> list = getRandQueue(1, 9);
+        for (int i = 0; i < 12; i++) {
+            list.remove((Integer) cells[i][col]);
+            list.remove((Integer) cells[row][i]);
+        }
+        int r2 = row / 3 * 3;
+        int c2 = col / 3 * 3;
+        for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++) list.remove((Integer) cells[r2 + i][c2 + j]);
+        return list;
+    }
+
     private Set<Integer> checkPossibles(int row, int col) {
-        Set<Integer> set = new HashSet<>(ZERO2NINE);
+        Set<Integer> set = new HashSet<>(ONE2NINE);
         for (int i = 0; i < 12; i++) {
             set.remove(cells[i][col]);
             set.remove(cells[row][i]);
@@ -209,7 +221,7 @@ public class Soduku implements Initializable {
     }
 
     private Set<Integer> checkLastPossibles(int row, int col) {
-        Set<Integer> set = new HashSet<>(ZERO2NINE);
+        Set<Integer> set = new HashSet<>(ONE2NINE);
         int max_row;
         if (row >= 9) {
             max_row = 12;
@@ -496,18 +508,23 @@ public class Soduku implements Initializable {
     public void generateMatrix() {
         new Thread(() -> {
             initNewGame();
-            for (int row = 0; row < 4; row++) {
-                for (int col = 0; col < 4; col++) {
-                    if (layout[row] != col) {
-                        if (row == 0 && (layout[row] == 0 ? col == 1 : col == 0)) {
-                            geneFirstGrid(row, col);
-                        } else {
-                            ArrayList<ArrayList<Integer>> solutions = getAllSolutions(row, col);
-                        }
-                    }
-                }
-            }
+            checkSetGrid(0, 143);
         }).start();
+    }
+
+    private boolean checkSetGrid(int index, final int last) {
+        int row = index / 12, col = index % 12;
+        if (layout[row / 3] == col / 3) return index == last || checkSetGrid(index + 1, last);
+        ArrayList<Integer> possibles = checkRandPossibles(row, col);
+        for (int num : possibles) {
+            cells[row][col] = num;
+            Platform.runLater(() -> boxes[row][col].setText(String.valueOf(num)));
+            if (index == last) return true;
+            if (checkSetGrid(index + 1, last)) return true;
+            cells[row][col] = 0;
+            Platform.runLater(() -> boxes[row][col].setText(""));
+        }
+        return false;
     }
 
     private void geneFirstGrid(int row, int col) {
@@ -524,12 +541,10 @@ public class Soduku implements Initializable {
         }
     }
 
-
     private ArrayList<ArrayList<Integer>> getAllSolutions(int row, int col) {
         int[] solution = new int[9];
         ArrayList<ArrayList<Integer>> solutions = new ArrayList<>();
         doSth(row, col, 0, solution, solutions);
-        solutions.forEach(System.out::println);
         return solutions;
     }
 
@@ -637,7 +652,7 @@ public class Soduku implements Initializable {
     }
 
     public Set<Integer> getRowPossibles(int row) {
-        Set<Integer> possibles = new HashSet<>(ZERO2NINE);
+        Set<Integer> possibles = new HashSet<>(ONE2NINE);
         for (int i = 0; i < 12; i++) {
             possibles.remove(cells[row][i]);
         }
@@ -741,9 +756,9 @@ public class Soduku implements Initializable {
         return list;
     }
 
-    private static List<Integer> getRandQueue(int min, int max) {
-        List<Integer> array = new ArrayList<>();
-        List<Integer> list = new ArrayList<>();
+    private static ArrayList<Integer> getRandQueue(int min, int max) {
+        ArrayList<Integer> array = new ArrayList<>();
+        ArrayList<Integer> list = new ArrayList<>();
         Random random = new Random(System.nanoTime());
         for (int i = min; i <= max; i++) list.add(i);
         int length = list.size();
