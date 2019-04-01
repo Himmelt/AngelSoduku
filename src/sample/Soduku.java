@@ -527,6 +527,47 @@ public class Soduku implements Initializable {
         return false;
     }
 
+    public void generatePuzzle(int amount) {
+        // 算法：
+        // 1. 逐层随机遍历，以避免重复。
+        int[][] copyCells = copyCells(cells);
+        Stack<Integer> selected = new Stack<>();
+        boolean result = checkPuzzle(1, amount, selected, copyCells);
+    }
+
+    public boolean checkPuzzle(int index, int last, final Stack<Integer> selected, final int[][] cells) {
+        ArrayList<Integer> possibles = getRandQueue(0, 143);
+        possibles.removeAll(selected);
+        for (int grid : possibles) {
+            int row = grid / 12, col = grid % 12;
+            if (layout[row / 3] == col / 3) continue;
+            selected.push(grid);
+            int num = cells[row][col];
+            cells[row][col] = 0;
+            if (index == last) {
+                int ss = walkAllSolutions(cells, selected);
+                System.out.println("Selected:" + selected + ",Solutions:" + ss);
+                if (ss == 1) return true;
+            }
+            if (checkPuzzle(index + 1, last, selected, cells)) return true;
+            selected.pop();
+            cells[row][col] = num;
+        }
+        return false;
+    }
+
+    public int walkAllSolutions(int[][] cells, Stack<Integer> grids) {
+        int[][] comp = copyCells(cells);
+        
+        return 0;
+    }
+
+    private int[][] copyCells(int[][] cells) {
+        int[][] array = new int[12][12];
+        for (int i = 0; i < 12; i++) System.arraycopy(cells[i], 0, array[i], 0, 12);
+        return array;
+    }
+
     private void geneFirstGrid(int row, int col) {
         List<Integer> queue = getRandQueue(1, 9);
         for (int i = 0; i < 3; i++) {
