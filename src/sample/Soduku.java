@@ -220,6 +220,22 @@ public class Soduku implements Initializable {
         return set;
     }
 
+    private Set<Integer> checkCellsPossibles(int row, int col, int[][] cells) {
+        Set<Integer> set = new HashSet<>(ONE2NINE);
+        for (int i = 0; i < 12; i++) {
+            set.remove(cells[i][col]);
+            set.remove(cells[row][i]);
+        }
+        int r2 = row / 3 * 3;
+        int c2 = col / 3 * 3;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                set.remove(cells[r2 + i][c2 + j]);
+            }
+        }
+        return set;
+    }
+
     private Set<Integer> checkLastPossibles(int row, int col) {
         Set<Integer> set = new HashSet<>(ONE2NINE);
         int max_row;
@@ -527,6 +543,10 @@ public class Soduku implements Initializable {
         return false;
     }
 
+    public void generatePuzzle() {
+        generatePuzzle(5);
+    }
+
     public void generatePuzzle(int amount) {
         // 算法：
         // 1. 逐层随机遍历，以避免重复。
@@ -556,10 +576,38 @@ public class Soduku implements Initializable {
         return false;
     }
 
-    public int walkAllSolutions(int[][] cells, Stack<Integer> grids) {
-        int[][] comp = copyCells(cells);
-        
-        return 0;
+    public int walkAllSolutions(final int[][] originCells, final Stack<Integer> originGrids) {
+        int[][] cells = copyCells(originCells);
+        ArrayList<Integer> grids = new ArrayList<>(originGrids);
+        Record record = new Record();
+        checkSolution(cells, grids, record);
+        return record.getRecord();
+    }
+
+    public boolean checkSolution(int[][] cells, ArrayList<Integer> grids, Record record) {
+        if (grids.isEmpty()) record.add(1);
+        for (int grid : grids) {
+            int row = grid / 12, col = grid % 12;
+            ArrayList<Integer> copyGrids = new ArrayList<>(grids);
+            copyGrids.remove((Integer) grid);
+
+            Set<Integer> possibles = checkCellsPossibles(row, col, cells);
+            if (possibles.size() == 1) {
+                cells[row][col] = possibles.iterator().next();
+                boolean flag = checkSolution(cells, copyGrids, record);
+                if (!flag) {
+                    cells[row][col] = 0;
+                    return false;
+                } else return true;
+            }
+            // TODO 最小回溯
+            for (int num : possibles) {
+                cells[row][col] = num;
+                checkSolution(cells, copyGrids, record);
+                cells[row][col] = 0;
+            }
+        }
+        return true;
     }
 
     private int[][] copyCells(int[][] cells) {
