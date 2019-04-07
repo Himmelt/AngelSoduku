@@ -566,15 +566,21 @@ public class Soduku implements Initializable {
             selected.push(grid);
             int num = cells[row][col];
             cells[row][col] = 0;
-            if (index == last) {
+            if (index >= last) {
                 int ss = walkAllSolutions(cells, selected);
                 System.out.println("Selected:" + selected + ",Solutions:" + ss);
-                if (ss == 1) return true;
+                if (ss == 1) {
+                    selected.pop();
+                    return true;
+                }
+            } else if (checkPuzzle(index + 1, last, selected, cells)) {
+                selected.pop();
+                return true;
             }
-            if (checkPuzzle(index + 1, last, selected, cells)) return true;
             selected.pop();
             cells[row][col] = num;
         }
+        System.out.println("fall back :" + index);
         return false;
     }
 
