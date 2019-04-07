@@ -565,11 +565,17 @@ public class Soduku implements Initializable {
             if (layout[row / 3] == col / 3) continue;
             selected.push(grid);
             if (index >= last) {
-                int ss = walkAllSolutions(cells, selected);
-                System.out.println("Selected:" + selected + ",Solutions:" + ss);
-                if (ss == 1) {
+                Record record = walkAllSolutions(cells, selected);
+                System.out.println("Selected:" + selected + ",Solutions:" + record.getRecord());
+                if (record.getRecord() == 1) {
                     selected.pop();
                     return true;
+                } else if (record.getRecord() >= 2) {
+                    // 出现多解，使用回溯遍历耗时太多
+                    // 初步方案，更换多解的关键空格
+                    System.out.println("多解回溯格:" + record.getStack());
+                    selected.pop();
+                    return false;
                 }
             } else if (checkPuzzle(index + 1, last, selected, cells)) {
                 selected.pop();
@@ -581,7 +587,7 @@ public class Soduku implements Initializable {
         return false;
     }
 
-    public int walkAllSolutions(final int[][] originCells, final Stack<Integer> selected) {
+    public Record walkAllSolutions(final int[][] originCells, final Stack<Integer> selected) {
         int[][] cells = copyCells(originCells);
         Set<Integer> selects = new HashSet<>(selected);
         for (int grid : selects) {
@@ -589,14 +595,15 @@ public class Soduku implements Initializable {
             cells[row][col] = 0;
         }
         Record record = new Record();
+        // TODO 如何获取多解的关键空格
         checkSolution(cells, selects, record);
-        return record.getRecord();
+        return record;
     }
 
-    public void checkSolution(int[][] cells, Set<Integer> selects, Record record) {
+    public boolean checkSolution(int[][] cells, Set<Integer> selects, Record record) {
         if (selects.isEmpty()) {
             record.add(1);
-            return;
+            return true;
         }
         int min = 9;
         int best = -1;
@@ -614,15 +621,18 @@ public class Soduku implements Initializable {
         if (min > 0 && min < 9 && best >= 0) {
             int row = best / 12, col = best % 12;
             selects.remove(best);
+            int count = 0;
             for (int num : possibles) {
                 cells[row][col] = num;
-                checkSolution(cells, selects, record);
+                if (checkSolution(cells, selects, record)) count++;
                 cells[row][col] = 0;
             }
+            if (count >= 2) record.multiPut(best);
             selects.add(best);
         } else {
             System.out.println("Invalid grids");
         }
+        return false;
     }
 
     private int[][] copyCells(int[][] cells) {
