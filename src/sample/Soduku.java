@@ -544,7 +544,7 @@ public class Soduku implements Initializable {
     }
 
     public void generatePuzzle() {
-        generatePuzzle(20);
+        generatePuzzle(30);
     }
 
     public void generatePuzzle(int amount) {
@@ -564,11 +564,8 @@ public class Soduku implements Initializable {
             int row = grid / 12, col = grid % 12;
             if (layout[row / 3] == col / 3) continue;
             selected.push(grid);
-            int num = cells[row][col];
-            cells[row][col] = 0;
             if (index >= last) {
                 int ss = walkAllSolutions(cells, selected);
-                // TODO 怎么会无解？？
                 System.out.println("Selected:" + selected + ",Solutions:" + ss);
                 if (ss == 1) {
                     selected.pop();
@@ -579,46 +576,52 @@ public class Soduku implements Initializable {
                 return true;
             }
             selected.pop();
-            cells[row][col] = num;
         }
         System.out.println("fall back :" + index);
         return false;
     }
 
-    public int walkAllSolutions(final int[][] originCells, final Stack<Integer> originGrids) {
+    public int walkAllSolutions(final int[][] originCells, final Stack<Integer> selected) {
         int[][] cells = copyCells(originCells);
-        Set<Integer> grids = new HashSet<>(originGrids);
+        Set<Integer> selects = new HashSet<>(selected);
+        for (int grid : selects) {
+            int row = grid / 12, col = grid % 12;
+            cells[row][col] = 0;
+        }
         Record record = new Record();
-        checkSolution(cells, grids, record);
+        checkSolution(cells, selects, record);
         return record.getRecord();
     }
 
-    public void checkSolution(int[][] cells, Set<Integer> grids, Record record) {
-        if (grids.isEmpty()) {
+    public void checkSolution(int[][] cells, Set<Integer> selects, Record record) {
+        if (selects.isEmpty()) {
             record.add(1);
             return;
         }
         int min = 9;
         int best = -1;
         Set<Integer> possibles = new HashSet<>();
-        for (int grid : grids) {
+        for (int grid : selects) {
             int row = grid / 12, col = grid % 12;
-            possibles = checkCellsPossibles(row, col, cells);
-            if (possibles.size() < min) {
-                min = possibles.size();
+            Set<Integer> pss = checkCellsPossibles(row, col, cells);
+            if (pss.size() < min) {
+                min = pss.size();
+                possibles = pss;
                 best = grid;
             }
             if (min == 1) break;
         }
-        if (min > 0 && best > 0) {
+        if (min > 0 && min < 9 && best >= 0) {
             int row = best / 12, col = best % 12;
-            grids.remove(best);
+            selects.remove(best);
             for (int num : possibles) {
                 cells[row][col] = num;
-                checkSolution(cells, grids, record);
+                checkSolution(cells, selects, record);
                 cells[row][col] = 0;
             }
-            grids.add(best);
+            selects.add(best);
+        } else {
+            System.out.println("Invalid grids");
         }
     }
 
