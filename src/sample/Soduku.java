@@ -568,6 +568,7 @@ public class Soduku implements Initializable {
             cells[row][col] = 0;
             if (index >= last) {
                 int ss = walkAllSolutions(cells, selected);
+                // TODO 怎么会无解？？
                 System.out.println("Selected:" + selected + ",Solutions:" + ss);
                 if (ss == 1) {
                     selected.pop();
