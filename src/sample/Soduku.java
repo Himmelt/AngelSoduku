@@ -544,19 +544,43 @@ public class Soduku implements Initializable {
     }
 
     public void generatePuzzle() {
-        generatePuzzle(30);
+        generatePuzzle(20);
+    }
+
+    public void generateSolution() {
+        Set<Integer> selects = new HashSet<>();
+        for (int grid = 0; grid < 144; grid++) {
+            int row = grid / 12, col = grid % 12;
+            if (layout[row / 3] == col / 3) continue;
+            if (cells[row][col] == 0) selects.add(grid);
+        }
+        solvePuzzle(cells, new HashSet<>(selects));
+        for (int grid : selects) {
+            int row = grid / 12, col = grid % 12;
+            Platform.runLater(() -> {
+                boxes[row][col].setText(String.valueOf(cells[row][col]));
+            });
+        }
     }
 
     public void generatePuzzle(int amount) {
-        // 算法：
-        // 1. 逐层随机遍历，以避免重复。
         int[][] copyCells = copyCells(cells);
         Stack<Integer> selected = new Stack<>();
-        boolean result = checkPuzzle(1, amount, selected, copyCells);
+        Record record = new Record();
+        boolean result = checkPuzzle(1, amount, selected, copyCells, record);
+        if (result) {
+            for (int grid : record.getSelected()) {
+                int row = grid / 12, col = grid % 12;
+                cells[row][col] = 0;
+                Platform.runLater(() -> {
+                    boxes[row][col].setText("");
+                });
+            }
+        }
         System.out.println(Arrays.deepToString(copyCells));
     }
 
-    public boolean checkPuzzle(int index, int last, final Stack<Integer> selected, final int[][] cells) {
+    public boolean checkPuzzle(int index, int last, final Stack<Integer> selected, final int[][] cells, final Record finalRecord) {
         // TODO BUG selected size up 2 107 ??
         ArrayList<Integer> possibles = getRandQueue(0, 143);
         possibles.removeAll(selected);
@@ -568,6 +592,7 @@ public class Soduku implements Initializable {
                 Record record = walkAllSolutions(cells, selected);
                 System.out.println("Selected:" + selected + ",Solutions:" + record.getRecord());
                 if (record.getRecord() == 1) {
+                    finalRecord.setSelected(selected);
                     selected.pop();
                     return true;
                 } else if (record.getRecord() >= 2) {
@@ -577,13 +602,43 @@ public class Soduku implements Initializable {
                     selected.pop();
                     return false;
                 }
-            } else if (checkPuzzle(index + 1, last, selected, cells)) {
+            } else if (checkPuzzle(index + 1, last, selected, cells, finalRecord)) {
                 selected.pop();
                 return true;
             }
             selected.pop();
         }
         System.out.println("fall back :" + index);
+        return false;
+    }
+
+    public boolean solvePuzzle(int[][] cells, Set<Integer> selects) {
+        if (selects.isEmpty()) return true;
+        int min = 9;
+        int best = -1;
+        Set<Integer> possibles = new HashSet<>();
+        for (int grid : selects) {
+            int row = grid / 12, col = grid % 12;
+            Set<Integer> pss = checkCellsPossibles(row, col, cells);
+            if (pss.size() < min) {
+                min = pss.size();
+                possibles = pss;
+                best = grid;
+            }
+            if (min == 1) break;
+        }
+        if (min > 0 && min < 9 && best >= 0) {
+            int row = best / 12, col = best % 12;
+            selects.remove(best);
+            for (int num : possibles) {
+                cells[row][col] = num;
+                if (solvePuzzle(cells, selects)) return true;
+                cells[row][col] = 0;
+            }
+            selects.add(best);
+        } else {
+            System.out.println("Invalid grids");
+        }
         return false;
     }
 

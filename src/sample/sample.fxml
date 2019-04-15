@@ -23,6 +23,7 @@
     <Button layoutX="120.0" layoutY="417.0" mnemonicParsing="false" onMouseClicked="#generateMatrix" text="generateMatrix" />
     <Button layoutX="120.0" layoutY="455.0" mnemonicParsing="false" onMouseClicked="#checkTheSoduku" text="checkTheSoduku" />
     <Button layoutX="120.0" layoutY="485.0" mnemonicParsing="false" onMouseClicked="#generatePuzzle" text="generatePuzzle" />
+    <Button layoutX="120.0" layoutY="499.0" mnemonicParsing="false" onMouseClicked="#generateSolution" text="generateSolution" />
 
     <Button layoutX="11.0" layoutY="139.0" mnemonicParsing="false" text="&lt; 上一步" />
     <Button fx:id="pause_button" layoutX="105.0" layoutY="138.0" mnemonicParsing="false" onMouseClicked="#pauseGame" text="暂停" />
