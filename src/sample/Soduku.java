@@ -201,23 +201,16 @@ public class Soduku implements Initializable {
         return list;
     }
 
-    private Set<Integer> checkPossibles(int row, int col) {
-        Set<Integer> set = new HashSet<>(ONE2NINE);
+    private ArrayList<Integer> checkPossibles(int row, int col) {
+        ArrayList<Integer> list = new ArrayList<>(ONE2NINE);
         for (int i = 0; i < 12; i++) {
-            set.remove(cells[i][col]);
-            set.remove(cells[row][i]);
+            list.remove((Integer) cells[i][col]);
+            list.remove((Integer) cells[row][i]);
         }
         int r2 = row / 3 * 3;
         int c2 = col / 3 * 3;
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                set.remove(cells[r2 + i][c2 + j]);
-            }
-        }
-        /*if (set.isEmpty()) {
-            System.out.println("Row:" + row + ",Col:" + col + " possibles is empty!");
-        }*/
-        return set;
+        for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++) list.remove((Integer) cells[r2 + i][c2 + j]);
+        return list;
     }
 
     private Set<Integer> checkCellsPossibles(int row, int col, int[][] cells) {
@@ -298,7 +291,7 @@ public class Soduku implements Initializable {
     // TODO 前进步用蓝色表示，后退步用橙红色表示
     private void forward(int row, int col, int num, int next) {
         cells[row][col] = num;
-        Step step = new Step(row, col, num, next < 108 ? checkPossibles(rowQueue[next], colQueue[next]) : new HashSet<>());
+        Step step = new Step(row, col, num, next < 108 ? checkPossibles(rowQueue[next], colQueue[next]) : new ArrayList<>());
         stacks.push(step);
         System.out.println(next - 1);
         //System.out.println("-->:" + (next - 1) + "," + step + "," + step.possibles);
@@ -524,11 +517,30 @@ public class Soduku implements Initializable {
     public void generateMatrix() {
         new Thread(() -> {
             initNewGame();
-            checkSetGrid(0, 143);
+            //checkSetGrid(0, 143);
+            checkSequenceSetGrid(0, 143);
+            System.out.println("--------------------------------------");
         }).start();
     }
 
+    private boolean checkSequenceSetGrid(int index, final int last) {
+        System.out.println(index);
+        int row = index / 12, col = index % 12;
+        if (layout[row / 3] == col / 3) return index == last || checkSequenceSetGrid(index + 1, last);
+        ArrayList<Integer> possibles = checkPossibles(row, col);
+        for (int num : possibles) {
+            cells[row][col] = num;
+            Platform.runLater(() -> boxes[row][col].setText(String.valueOf(num)));
+            if (index == last) return true;
+            if (checkSequenceSetGrid(index + 1, last)) return true;
+            cells[row][col] = 0;
+            Platform.runLater(() -> boxes[row][col].setText(""));
+        }
+        return false;
+    }
+
     private boolean checkSetGrid(int index, final int last) {
+        System.out.println(index);
         int row = index / 12, col = index % 12;
         if (layout[row / 3] == col / 3) return index == last || checkSetGrid(index + 1, last);
         ArrayList<Integer> possibles = checkRandPossibles(row, col);
@@ -720,7 +732,7 @@ public class Soduku implements Initializable {
     private void doSth(int row, int col, int i, int[] solution, ArrayList<ArrayList<Integer>> solutions) {
         int r1 = row * 3 + i / 3;
         int c1 = col * 3 + i % 3;
-        Set<Integer> possibles = checkPossibles(r1, c1);
+        List<Integer> possibles = checkPossibles(r1, c1);
         for (int num : possibles) {
             cells[r1][c1] = num;
             solution[i] = num;
@@ -779,7 +791,7 @@ public class Soduku implements Initializable {
 
 
             if (ps1.size() >= 1) {
-                Set<Integer> ps = checkPossibles(r1, c1);
+                List<Integer> ps = checkPossibles(r1, c1);
                 int num = ps.size() >= 1 ? ps.iterator().next() : ps1.iterator().next();
                 cells[r1][c1] = num;
                 ps1.remove(num);
@@ -787,7 +799,7 @@ public class Soduku implements Initializable {
                 ps3.remove(num);
             }
             if (ps2.size() >= 1) {
-                Set<Integer> ps = checkPossibles(r1, c1 + 1);
+                List<Integer> ps = checkPossibles(r1, c1 + 1);
                 int num = ps.size() >= 1 ? ps.iterator().next() : ps2.iterator().next();
                 cells[r1][c1 + 1] = num;
                 ps1.remove(num);
@@ -795,7 +807,7 @@ public class Soduku implements Initializable {
                 ps3.remove(num);
             }
             if (ps3.size() >= 1) {
-                Set<Integer> ps = checkPossibles(r1, c1 + 2);
+                List<Integer> ps = checkPossibles(r1, c1 + 2);
                 int num = ps.size() >= 1 ? ps.iterator().next() : ps3.iterator().next();
                 cells[r1][c1 + 2] = num;
                 ps1.remove(num);

@@ -1,14 +1,14 @@
 package sample;
 
-import java.util.Set;
+import java.util.List;
 
 public class Step {
     public int row;
     public int col;
     public int num;
-    public Set<Integer> possibles;
+    public List<Integer> possibles;
 
-    public Step(int row, int col, int num, Set<Integer> possibles) {
+    public Step(int row, int col, int num, List<Integer> possibles) {
         this.row = row;
         this.col = col;
         this.num = num;
